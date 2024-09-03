@@ -655,6 +655,10 @@ class RecipeManagerTrainerInterface:
         for item in to_drop:
             template.pop(item)
 
+        to_drop = [k for k in template if k == "gradient_state" or k == "iteration"]
+        for item in to_drop:
+            template.pop(item)
+
         # override defaults if kwargs are given, for example via recipe
         if kwargs:
             template.update(kwargs)
