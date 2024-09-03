@@ -34,4 +34,9 @@ from .modifier_pruning_obs import *
 from .modifier_pruning_rigl import *
 from .modifier_pruning_structured import *
 from .modifier_pruning_topkast import *
+# from .modifier_pruning_samoyeds import *
+from .modifier_pruning_venom import *
+
+from .modifier_pruning_24_pairwise_obs import *
+from .modifier_pruning_trans_nmv_pairwise_obs import *
 from .scorer import *
