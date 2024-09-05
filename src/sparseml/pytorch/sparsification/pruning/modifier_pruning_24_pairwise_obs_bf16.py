@@ -64,8 +64,8 @@ import numpy as np
 import time
 
 __all__ = [
-    "OBS24pairPruningModifier",
-    "OBS24pairPruningParamsScorer",
+    "BF16OBS24pairPruningModifier",
+    "BF16OBS24pairPruningParamsScorer",
 ]
 
 
@@ -73,7 +73,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 @PyTorchModifierYAML()
-class OBS24pairPruningModifier(BaseGradualPruningModifier):
+class BF16OBS24pairPruningModifier(BaseGradualPruningModifier):
     """
     As described in https://arxiv.org/abs/2203.07259
     Gradually applies kernel sparsity to a given parameter or parameters from
@@ -248,7 +248,7 @@ class OBS24pairPruningModifier(BaseGradualPruningModifier):
         :param kwargs: optional kwargs to support specific arguments
             for individual modifiers.
         """
-        _LOGGER.info("Initializing OBS24pairPruningModifier")
+        _LOGGER.info("Initializing BF16OBS24pairPruningModifier")
         if (
             "grad_sampler" not in kwargs
             or "data_loader_builder" not in kwargs["grad_sampler"]
@@ -330,7 +330,7 @@ class OBS24pairPruningModifier(BaseGradualPruningModifier):
         :param params: list of Parameters for scorer to track
         :return: param scorer object to be used by this pruning algorithm
         """
-        return OBS24pairPruningParamsScorer(
+        return BF16OBS24pairPruningParamsScorer(
             params=params,
             num_grads=self._num_grads,
             damp=self._damp,
@@ -362,7 +362,7 @@ class OBS24pairPruningModifier(BaseGradualPruningModifier):
             module.train()
 
 
-class OBS24pairPruningParamsScorer(PruningParamsGradScorer):
+class BF16OBS24pairPruningParamsScorer(PruningParamsGradScorer):
     """
     Scores parameters using the equations introduced in the Optimal BERT Surgeon
     to solve for the optimal weight update in the Optimal Brain Surgeon (OBS)

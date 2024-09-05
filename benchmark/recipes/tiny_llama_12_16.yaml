@@ -1,0 +1,105 @@
+modifiers:
+  - !EpochRangeModifier
+    start_epoch: 0
+    end_epoch: 50
+
+training_modifiers:
+  - !LearningRateFunctionModifier
+    start_epoch: 0.0
+    end_epoch: 2.0
+    lr_func: linear
+    init_lr: 8e-5
+    final_lr: 8e-6
+  - !LearningRateFunctionModifier
+    start_epoch: 2.0
+    end_epoch: 5.0
+    lr_func: cyclic_linear
+    cycle_epochs: 4.0
+    init_lr: 8e-5
+    final_lr: 8e-6
+
+  - !BF16OBSTransnmvpairPruningModifier
+    params: [
+      're:.*layers.([1-9]|10).mlp.gate_proj',
+      're:.*layers.([1-9]|10).mlp.up_proj',
+      're:.*layers.([1-9]|10).mlp.down_proj',
+    ]
+    init_sparsity: 0.5
+    final_sparsity: 0.5
+    start_epoch: 0.0
+    end_epoch: 1.0
+    update_frequency: 1.0
+    inter_func: linear
+    global_sparsity: False
+    mask_type: '1:2:16'
+    num_grads: 1024
+    damp: 1e-7
+    fisher_block_size: 32
+    grad_sampler_kwargs:
+     batch_size: 16
+  
+  - !BF16OBSTransnmvpairPruningModifier
+    params: [
+      're:.*layers.(1[1-9]|20).mlp.gate_proj',
+      're:.*layers.(1[1-9]|20).mlp.up_proj',
+      're:.*layers.(1[1-9]|20).mlp.down_proj',
+    ]
+    init_sparsity: 0.5
+    final_sparsity: 0.5
+    start_epoch: 0.0
+    end_epoch: 1.0
+    update_frequency: 1.0
+    inter_func: linear
+    global_sparsity: False
+    mask_type: '1:2:16'
+    num_grads: 1024
+    damp: 1e-7
+    fisher_block_size: 32
+    grad_sampler_kwargs:
+     batch_size: 16
+  
+  - !BF16OBS24pairPruningModifier
+    params: [
+      're:.*layers.([1-9]|10).mlp.gate_proj',
+      're:.*layers.([1-9]|10).mlp.up_proj',
+      're:.*layers.([1-9]|10).mlp.down_proj',
+    ]
+    init_sparsity: 0.75
+    final_sparsity: 0.75
+    start_epoch: 1.0
+    end_epoch: 2.0
+    update_frequency: 1.0
+    inter_func: linear
+    global_sparsity: False
+    mask_type: unstructured
+    num_grads: 1024
+    damp: 1e-7
+    fisher_block_size: 32
+    grad_sampler_kwargs:
+     batch_size: 16
+  
+  - !BF16OBS24pairPruningModifier
+    params: [
+      're:.*layers.(1[1-9]|20).mlp.gate_proj',
+      're:.*layers.(1[1-9]|20).mlp.up_proj',
+      're:.*layers.(1[1-9]|20).mlp.down_proj',
+    ]
+    init_sparsity: 0.75
+    final_sparsity: 0.75
+    start_epoch: 1.0
+    end_epoch: 2.0
+    update_frequency: 1.0
+    inter_func: linear
+    global_sparsity: False
+    mask_type: unstructured
+    num_grads: 1024
+    damp: 1e-7
+    fisher_block_size: 32
+    grad_sampler_kwargs:
+     batch_size: 16
+
+#distillation_modifiers:
+#  - !DistillationModifier
+#     hardness: 1.0
+#     temperature: 2.0
+#     distill_output_keys: [start_logits, end_logits]
