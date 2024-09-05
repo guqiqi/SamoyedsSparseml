@@ -687,7 +687,7 @@ def get_mask_creator_default(mask_type: Union[str, List[int]]) -> PruningMaskCre
         pruning (does not support padding)
     :return: mask creator object created from the mask type
     """
-    if mask_type == "unstructured":
+    if mask_type == "unstructured" or len(mask_type.split(":")) == 3:
         return UnstructuredPruningMaskCreator()
     elif mask_type == "block4":
         return FourBlockMaskCreator()
