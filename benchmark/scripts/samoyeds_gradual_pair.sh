@@ -21,7 +21,16 @@ export RECIPE=benchmark/recipes/${YAML_NAME}.yaml
 YAML_LISTS=(
     obs_samoyeds_gradual_pair_12_4
     obs_samoyeds_gradual_pair_12_16
-    obs_samoyeds_gradual_pair_12_64 obs_samoyeds_gradual_pair_12_128 obs_samoyeds_gradual_pair_48_4 obs_samoyeds_gradual_pair_48_16 obs_samoyeds_gradual_pair_48_64 obs_samoyeds_gradual_pair_48_128 obs_samoyeds_gradual_pair_816_4 obs_samoyeds_gradual_pair_816_16 obs_samoyeds_gradual_pair_816_64 obs_samoyeds_gradual_pair_816_128
+    obs_samoyeds_gradual_pair_12_64
+    obs_samoyeds_gradual_pair_12_128
+    obs_samoyeds_gradual_pair_48_4
+    obs_samoyeds_gradual_pair_48_16
+    obs_samoyeds_gradual_pair_48_64
+    obs_samoyeds_gradual_pair_48_128
+    obs_samoyeds_gradual_pair_816_4
+    obs_samoyeds_gradual_pair_816_16
+    obs_samoyeds_gradual_pair_816_64
+    obs_samoyeds_gradual_pair_816_128
 )
 
 for yaml_name in ${YAML_LISTS[@]};do
@@ -30,7 +39,7 @@ for yaml_name in ${YAML_LISTS[@]};do
     export YAML_NAME=$yaml_name
     export RECIPE=benchmark/recipes/${YAML_NAME}.yaml
         
-    torchrun --nnodes 1 --standalone --nproc_per_node 8 src/sparseml/transformers/question_answering.py \
+    torchrun --nnodes 1 --standalone --nproc_per_node 4 src/sparseml/transformers/question_answering.py \
     --distill_teacher neuralmagic/oBERT-teacher-squadv1 \
     --model_name_or_path bert-base-uncased \
     --dataset_name rajpurkar/squad \
