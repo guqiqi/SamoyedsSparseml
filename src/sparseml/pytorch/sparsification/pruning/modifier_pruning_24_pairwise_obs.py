@@ -448,7 +448,7 @@ class OBS24pairPruningParamsScorer(PruningParamsGradScorer):
 
     @torch.no_grad()
     def find_best_combination0(self, scores, mm_row, nn_row, tensor_shape, device_, dtype_):
-        min_value = (torch.ones(scores.shape[0])*torch.inf).bfloat16()
+        min_value = (torch.ones(scores.shape[0])*torch.inf)
 
         best_indices_a2 = torch.zeros(tensor_shape).bool()
         best_indices_b2 = torch.zeros(tensor_shape[0], tensor_shape[1]//2).bool()
@@ -486,7 +486,7 @@ class OBS24pairPruningParamsScorer(PruningParamsGradScorer):
 
     @torch.no_grad()
     def find_best_combination1(self, scores, mm_row, nn_row, tensor_shape, device_, dtype_, v=None, exclude_bool=None, best_to_prune_nm_idx=None, m_p=0):
-        min_value = (torch.ones(scores.shape[0])*torch.inf).bfloat16()
+        min_value = (torch.ones(scores.shape[0])*torch.inf)
         best_indices_a2 = torch.zeros(tensor_shape).bool()
         best_indices_b2 = torch.zeros(tensor_shape).bool()
 
@@ -616,9 +616,9 @@ class OBS24pairPruningParamsScorer(PruningParamsGradScorer):
 
                 ############ pair-wise
                 block_finv_w_pair = torch.linalg.solve(
-                        block_finv.float(),
-                        block_w.float(),
-                    ).bfloat16()
+                        block_finv,
+                        block_w,
+                    )
                 scores_pair = 0.5 * torch.einsum(
                     "bi,bi->b", block_w, block_finv_w_pair
                 )
@@ -636,7 +636,7 @@ class OBS24pairPruningParamsScorer(PruningParamsGradScorer):
                 best_score_nmv = torch.ones((nrows//v, ncols//m))*torch.inf
                 best_score_nm = torch.ones(block_w.shape[0])*torch.inf
                 best_to_prune_idx = torch.zeros((nrows//v, ncols//m), dtype=torch.long)
-                best_block_finv_w = torch.zeros((block_w.shape[0], n), dtype=torch.bfloat16)
+                best_block_finv_w = torch.zeros((block_w.shape[0], n))
 
                 for k in range(num_combs):
                     #block_w_nm = block_w[:, e_nm[k].nonzero().squeeze()]
@@ -646,9 +646,9 @@ class OBS24pairPruningParamsScorer(PruningParamsGradScorer):
 
                     # cache finv_w products for OBS weight update
                     block_finv_w_nm = torch.linalg.solve(
-                        block_finv_nm.float(),
-                        block_w_nm.float(),
-                    ).bfloat16()  # (d/4, 2)
+                        block_finv_nm,
+                        block_w_nm,
+                    )  # (d/4, 2)
 
                     score_nm = 0.5 * torch.einsum(
                         "bi,bi->b", block_w_nm, block_finv_w_nm
@@ -940,7 +940,7 @@ class EmpiricalBlockFisherInverse:
             (1.0 / self.damp * torch.eye(n=self.B, device=self.dev))
             .unsqueeze(0)
             .repeat(self.num_blocks, 1, 1)
-        ).bfloat16()  # O(d x B) memory
+        )  # O(d x B) memory
 
     def add_grad(self, g: Tensor):
         """
