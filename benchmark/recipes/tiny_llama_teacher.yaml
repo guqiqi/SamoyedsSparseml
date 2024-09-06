@@ -1,0 +1,28 @@
+version: 1.1.0
+
+# General Variables
+num_epochs: 5
+init_lr: 0.0002
+final_lr: 0
+
+warmup_epoch: 0.033
+
+# Modifiers:
+training_modifiers:
+  - !EpochRangeModifier
+      end_epoch: eval(num_epochs)
+      start_epoch: 0.0
+
+  - !LearningRateFunctionModifier
+    start_epoch: 0
+    end_epoch: eval(warmup_epoch)
+    lr_func: linear
+    init_lr: 0.0
+    final_lr: eval(init_lr)
+
+  - !LearningRateFunctionModifier
+    start_epoch: eval(warmup_epoch)
+    end_epoch: eval(num_epochs)
+    lr_func: linear
+    init_lr: eval(init_lr)
+    final_lr: eval(final_lr)
