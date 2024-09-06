@@ -222,7 +222,10 @@ def interpolate(
 
     # convert our x to 0-1 range since equations are designed to fit in
     # (0,0)-(1,1) space
-    x_per = (x_cur - x0) / (x1 - x0)
+    if x1 == x0:
+        x_per = 0
+    else:
+        x_per = (x_cur - x0) / (x1 - x0)
 
     # map x to y using the desired function in (0,0)-(1,1) space
     if inter_func == "linear":
