@@ -348,6 +348,8 @@ class BF16OBSTransnmvpairPruningModifier(BaseGradualPruningModifier):
                 "One-shot OBS pruning requires a GradSampler object given by the "
                 f"grad_sampler kwarg. Given an object of type {type(grad_sampler)}"
             )
+        
+        torch.cuda.empty_cache()
 
         is_training = module.training
         _LOGGER.info("Setting the model in the eval mode")
@@ -822,6 +824,8 @@ class BF16OBSTransnmvpairPruningParamsScorer(PruningParamsGradScorer):
         # block_finv_w的形状和原来一致
         self._broadcast_list_from_main(block_finv_w)
         self._block_finv_w = block_finv_w  # cache for OBS weight update
+        
+        torch.cuda.empty_cache()
 
         return scores
 
@@ -955,7 +959,7 @@ class EmpiricalBlockFisherInverse:
 
         self.num_blocks = math.ceil(self.d / self.B)
         self.f_inv = (
-            (1.0 / self.damp * torch.eye(n=self.B, device=self.dev))
+            (1.0 / self.damp * torch.eye(n=self.B, device=self.dev, dtype=torch.bfloat16))
             .unsqueeze(0)
             .repeat(self.num_blocks, 1, 1)
         ).bfloat16()  # O(d x B) memory

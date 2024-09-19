@@ -415,7 +415,7 @@ def main(**kwargs):
         use_auth_token=True if model_args.use_auth_token else None,
     )
     
-    # config._attn_implementation = 'flash_attention_2'
+    config._attn_implementation = 'flash_attention_2'
 
     # model, teacher = SparseAutoModel.question_answering_from_pretrained_distil(
     #     model_name_or_path=model_args.model_name_or_path,
@@ -909,8 +909,8 @@ def _get_tokenized_datasets(dataset, data_args, tokenizer: "AutoTokenizer", spli
     # elif isinstance(splits, List):
     #     splits = {_get_split_name(s): s for s in splits}
     
-    splits={'train': 'train[:10%]', 'validation': 'train[10%:20%]'}
-    # splits={'train': 'train[:80%]', 'validation': 'train[80%:]'}
+    # splits={'train': 'train[:1%]', 'validation': 'train[10%:11%]'}
+    splits={'train': 'train[:80%]', 'validation': 'train[80%:]'}
 
     # default to custom dataset if dataset provided isn't a string
     registry_id = dataset
