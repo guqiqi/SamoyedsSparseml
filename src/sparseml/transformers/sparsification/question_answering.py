@@ -113,7 +113,7 @@ class _QuestionAnsweringTrainer(TransformersTrainer):
 
             self.log(metrics)
         else:
-            metrics = {}
+            metrics = output.metrics
 
         if self.args.tpu_metrics_debug or self.args.debug:
             # tpu-comment: Logging debug metrics for PyTorch/XLA

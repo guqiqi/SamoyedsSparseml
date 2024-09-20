@@ -158,6 +158,8 @@ class TextGenerationDataset(RegistryMixin):
             # to the loss calculation
             prompt_len = 0
             if self.PROMPT_KEY in data:
+                if len(data[self.PROMPT_KEY]) == len(data["input_ids"]):
+                    data[self.PROMPT_KEY].pop()
                 prompt_len = len(data[self.PROMPT_KEY])
             data["labels"] = data["input_ids"].copy()
             data["labels"][:prompt_len] = [LABELS_MASK_VALUE] * prompt_len
