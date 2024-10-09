@@ -579,6 +579,10 @@ class BF16OBS24pairPruningParamsScorer(PruningParamsGradScorer):
         scores = [None] * len(self._params)
         block_finv_w = [None] * len(self._params)
 
+        for i in range(len(self._params)):
+            if torch.isnan(self._params[i]).any():
+                print("NAN in ", self.__class__.__name__, " in the ", i, "-th layer")
+
         # Change depending on your n:m pattern and V value. Examples
         #nm = {0.0:(3,8), 0.375:(4,8), 0.5:(5,8), 0.625:(6,8)}
         # nm = {0.0:(7,16), 0.4375:(8,16), 0.5:(9,16), 0.5625:(10,16), 0.625:(11,16), 0.6875:(12,16), 0.75:(13,16), 0.8125:(14,16)}
@@ -964,8 +968,25 @@ class EmpiricalBlockFisherInverse:
         finv_g = torch.einsum("bij,bj->bi", self.f_inv, g)
 
         # scalar denominator for each batch: (batch)
-        alpha = (self.m + torch.einsum("bi,bi->b", g, finv_g)).sqrt().unsqueeze(1)
+        # temp = torch.clamp(self.m + torch.einsum("bi,bi->b", g, finv_g), min=0)
+        temp = self.m + torch.einsum("bi,bi->b", g, finv_g)
+        alpha = torch.where(temp > 0, torch.sqrt(temp), -torch.sqrt(-temp)).unsqueeze(1)
+        
+        # alpha = (temp).sqrt().unsqueeze(1)
+        # alpha = (self.m + torch.einsum("bi,bi->b", g, finv_g)).sqrt().unsqueeze(1)
         finv_g /= alpha
+        
+        if torch.isnan(finv_g).any():
+            if (alpha == 0).any():
+                print("!!!!!!!!!!!!!!!!!!!! ZERO IN ALPHA !!!!!!!!!!!!!!!!!!!!")
+            if torch.isnan(alpha).any():
+                print("!!!!!!!!!!!!!!!!!!!! NAN IN ADD GRAD !!!!!!!!!!!!!!!!!!!!")
+
+        # if torch.isnan(alpha).any():
+        #     if (temp < 0).any():
+        #         print("!!!!!!!!!!!!!!!!!!!! SQRT OF A NEGATIVE !!!!!!!!!!!!!!!!!!!!")
+        #     else:
+        #         print("!!!!!!!!!!!!!!!!!!!! NAN IN ADD GRAD (No neg) !!!!!!!!!!!!!!!!!!!!")
 
         # update f_inv with new outer product: (batch, B) x (batch, B) -> (batch, B, B)
         self.f_inv.baddbmm_(finv_g.unsqueeze(2), finv_g.unsqueeze(1), alpha=-1)
