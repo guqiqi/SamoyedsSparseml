@@ -58,6 +58,8 @@ from sparseml.transformers.sparsification.sparse_model import get_shared_tokeniz
 from sparseml.transformers.finetune.data import TextGenerationDataset
 from sparseml.transformers.finetune.data.data_helpers import make_dataset_splits
 
+from torch.utils.data import random_split
+
 # You can also adapt this script on your own question answering task.
 # Pointers for this are left as comments.
 
@@ -910,7 +912,11 @@ def _get_tokenized_datasets(dataset, data_args, tokenizer: "AutoTokenizer", spli
     #     splits = {_get_split_name(s): s for s in splits}
     
     # splits={'train': 'train[:1%]', 'validation': 'train[10%:11%]'}
-    splits={'train': 'train[:80%]', 'validation': 'train[80%:]'}
+    # splits={'train': 'train[:80%]', 'validation': 'train[80%:]'}
+    if dataset == 'open_platypus':
+        splits = {"all": None}
+    elif dataset == 'gsm8k':
+        splits = {'train': 'train', 'validation': 'test'}
 
     # default to custom dataset if dataset provided isn't a string
     registry_id = dataset
@@ -933,6 +939,17 @@ def _get_tokenized_datasets(dataset, data_args, tokenizer: "AutoTokenizer", spli
             raw_dataset = dataset_manager.get_raw_dataset()
             tokenized_dataset = dataset_manager.tokenize_and_process(raw_dataset)
             tokenized_datasets[split_name] = tokenized_dataset
+
+
+    if dataset == 'open_platypus':
+        train_size = int(len(tokenized_datasets["all"]['train']) * 0.9)
+        validation_size = len(tokenized_datasets["all"]['train']) - train_size
+
+        # print("train_size: ", train_size, " validation_size: ", validation_size)
+
+        tokenized_datasets["train"], tokenized_datasets["validation"] = random_split(tokenized_datasets["all"]['train'], [train_size, validation_size])
+
+        # print("tokenized datasets: ", len(tokenized_datasets["train"]), len(tokenized_datasets["validation"]))
 
     datasets = make_dataset_splits(
         tokenized_datasets,
