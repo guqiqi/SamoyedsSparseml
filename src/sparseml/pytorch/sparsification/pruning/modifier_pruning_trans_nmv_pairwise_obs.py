@@ -182,7 +182,7 @@ class OBSTransnmvpairPruningModifier(BaseGradualPruningModifier):
         self._last_applied_sparsity = 0.  # keep track for recomputations steps
 
         self._grad_sampler = None
-        self._supported_masks = ("1:2:4", "1:2:16", "1:2:64", "1:2:128", "4:8:4", "4:8:16", "4:8:64", "4:8:128", "8:16:4", "8:16:16", "8:16:64", "8:16:128", "unstructured")
+        self._supported_masks = ("1:2:4", "1:2:16", "1:2:32", "1:2:64", "1:2:128", "4:8:4", "4:8:16", "4:8:64", "4:8:128", "8:16:4", "8:16:16", "8:16:64", "8:16:128", "unstructured")
 
         self._validate()
 

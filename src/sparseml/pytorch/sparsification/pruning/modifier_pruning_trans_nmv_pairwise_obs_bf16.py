@@ -182,7 +182,7 @@ class BF16OBSTransnmvpairPruningModifier(BaseGradualPruningModifier):
         self._last_applied_sparsity = 0.  # keep track for recomputations steps
 
         self._grad_sampler = None
-        self._supported_masks = ("1:2:4", "1:2:16", "1:2:64", "1:2:128", "4:8:4", "4:8:16", "4:8:64", "4:8:128", "8:16:4", "8:16:16", "8:16:64", "8:16:128", "unstructured")
+        self._supported_masks = ("1:2:4", "1:2:16", "1:2:32", "1:2:64", "1:2:128", "4:8:4", "4:8:16", "4:8:64", "4:8:128", "8:16:4", "8:16:16", "8:16:64", "8:16:128", "unstructured")
 
         self._validate()
 
@@ -579,6 +579,10 @@ class BF16OBSTransnmvpairPruningParamsScorer(PruningParamsGradScorer):
         scores = [None] * len(self._params)
         block_finv_w = [None] * len(self._params)
 
+        for i in range(len(self._params)):
+            if torch.isnan(self._params[i]).any():
+                print("NAN in ", self.__class__.__name__, " in the ", i, "-th layer")
+
         # Change depending on your n:m pattern and V value. Examples
         #nm = {0.0:(3,8), 0.375:(4,8), 0.5:(5,8), 0.625:(6,8)}
         # nm = {0.0:(7,16), 0.4375:(8,16), 0.5:(9,16), 0.5625:(10,16), 0.625:(11,16), 0.6875:(12,16), 0.75:(13,16), 0.8125:(14,16)}
@@ -599,6 +603,8 @@ class BF16OBSTransnmvpairPruningParamsScorer(PruningParamsGradScorer):
         if self._is_main_proc:
             for i, finv in enumerate(self._finvs):
                 # TODO self._params[i].data需要转置
+                print("nmv raw params: ", self._params[i])
+                print("nmv finv: ", finv.f_inv)
                 trans_params = self._params[i].data.t()
                 block_w = trans_params.reshape(-1, m).to("cpu")
                 # block_w = self._params[i].data.view(-1, m).to("cpu")
@@ -617,7 +623,6 @@ class BF16OBSTransnmvpairPruningParamsScorer(PruningParamsGradScorer):
 
                 _LOGGER.info("layer " + str(i) + " (out of " + str(len(self._finvs)) + "). Device cpu")
                 # TODO 转置后的行列数
-                print(trans_params)
                 nrows, ncols = trans_params.shape
                 # nrows, ncols = self._params[i].data.shape
                 _LOGGER.info("nrows: "+str(nrows)+", ncols: "+str(ncols)+", v: "+str(v)+", nn_row: "+str(nn_row) )
@@ -850,6 +855,9 @@ class BF16OBSTransnmvpairPruningParamsScorer(PruningParamsGradScorer):
         for i, finv in enumerate(self._finvs):
             self._params[i].grad.mul_(masks[i])
             # trans_grad = self._params[i].grad.t()
+            # print("nmv param: ", self._params[i])
+            # print("gradient: ", self._params[i].grad)
+            finv_temp = finv.f_inv.clone()
             finv.add_grad(self._params[i].grad.t().reshape(-1).to(self._devices[i]))
             # finv.add_grad(self._params[i].grad.view(-1).to(self._devices[i]))
 
@@ -911,6 +919,11 @@ class BF16OBSTransnmvpairPruningParamsScorer(PruningParamsGradScorer):
         for i, param in enumerate(self._params):
             param.data -= obs_updates[i].to(param.data.device)
             param.data[mask_diffs[i] == -1] = 0.0
+            
+            print("after mask update nmv params: ", param.data)
+
+            if torch.isnan(param.data).any():
+                print("after nmv, param exist nan!!!")
         
         # if self._is_main_proc:
         #     time_s = int(time.time())
@@ -969,6 +982,7 @@ class EmpiricalBlockFisherInverse:
         Updates empirical Fisher inverse with a new gradient
         :param g: a collected gradient
         """
+        # temp = self.f_inv.clone()
         # if 'd / B' is not integer, pad with zeros for batch calculations
         if g.numel() < self.num_blocks * self.B:
             g = torch.cat(
@@ -982,8 +996,24 @@ class EmpiricalBlockFisherInverse:
         finv_g = torch.einsum("bij,bj->bi", self.f_inv, g)
 
         # scalar denominator for each batch: (batch)
-        alpha = (self.m + torch.einsum("bi,bi->b", g, finv_g)).sqrt().unsqueeze(1)
+        # temp = self.m + torch.einsum("bi,bi->b", g, finv_g)
+        temp = self.m + torch.einsum("bi,bi->b", g, finv_g)
+        alpha = torch.where(temp > 0, torch.sqrt(temp), -torch.sqrt(-temp)).unsqueeze(1)
+        
+        # alpha = (temp).sqrt().unsqueeze(1)
         finv_g /= alpha
+        
+        if torch.isnan(finv_g).any():
+            if (alpha == 0).any():
+                print("!!!!!!!!!!!!!!!!!!!! ZERO IN ALPHA !!!!!!!!!!!!!!!!!!!!")
+            if torch.isnan(alpha).any():
+                print("!!!!!!!!!!!!!!!!!!!! NAN IN ADD GRAD !!!!!!!!!!!!!!!!!!!!")
+
+        # if torch.isnan(alpha).any():
+        #     if (temp < 0).any():
+        #         print("!!!!!!!!!!!!!!!!!!!! SQRT OF A NEGATIVE !!!!!!!!!!!!!!!!!!!!")
+        #     else:
+        #         print("!!!!!!!!!!!!!!!!!!!! NAN IN ADD GRAD (No neg) !!!!!!!!!!!!!!!!!!!!")
 
         # update f_inv with new outer product: (batch, B) x (batch, B) -> (batch, B, B)
         self.f_inv.baddbmm_(finv_g.unsqueeze(2), finv_g.unsqueeze(1), alpha=-1)
