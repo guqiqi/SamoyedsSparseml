@@ -988,7 +988,7 @@ class EmpiricalBlockFisherInverse:
         # alpha = (self.m + torch.einsum("bi,bi->b", g, finv_g)).sqrt().unsqueeze(1)
         finv_g /= alpha
 
-                if (alpha == 0).any():
+        if (alpha == 0).any():
             print("!!!!!!!!!!!!!!!!!!!! ZERO IN ALPHA (nmv) !!!!!!!!!!!!!!!!!!!!")
         if torch.isnan(alpha).any():
             print("!!!!!!!!!!!!!!!!!!!! NAN IN ADD GRAD (nmv) (nan in alpha) !!!!!!!!!!!!!!!!!!!!")
