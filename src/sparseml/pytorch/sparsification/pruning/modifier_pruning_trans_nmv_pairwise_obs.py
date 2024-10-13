@@ -577,6 +577,9 @@ class OBSTransnmvpairPruningParamsScorer(PruningParamsGradScorer):
         scores = [None] * len(self._params)
         block_finv_w = [None] * len(self._params)
 
+        for i in range(len(self._params)):
+            if torch.isnan(self._params[i]).any():
+                print("NAN in ", self.__class__.__name__, " in the ", i, "-th layer")
         # Change depending on your n:m pattern and V value. Examples
         #nm = {0.0:(3,8), 0.375:(4,8), 0.5:(5,8), 0.625:(6,8)}
         # nm = {0.0:(7,16), 0.4375:(8,16), 0.5:(9,16), 0.5625:(10,16), 0.625:(11,16), 0.6875:(12,16), 0.75:(13,16), 0.8125:(14,16)}
@@ -906,6 +909,8 @@ class OBSTransnmvpairPruningParamsScorer(PruningParamsGradScorer):
         for i, param in enumerate(self._params):
             param.data -= obs_updates[i].to(param.data.device)
             param.data[mask_diffs[i] == -1] = 0.0
+            if torch.isnan(param.data).any():
+                print("after nmv, param exist nan!!!")
         
         # if self._is_main_proc:
         #     time_s = int(time.time())
@@ -977,8 +982,24 @@ class EmpiricalBlockFisherInverse:
         finv_g = torch.einsum("bij,bj->bi", self.f_inv, g)
 
         # scalar denominator for each batch: (batch)
-        alpha = (self.m + torch.einsum("bi,bi->b", g, finv_g)).sqrt().unsqueeze(1)
+        temp = self.m + torch.einsum("bi,bi->b", g, finv_g)
+        alpha = torch.where(temp > 0, torch.sqrt(temp), -torch.sqrt(-temp)).unsqueeze(1)
+        alpha = torch.clamp(alpha, min=torch.finfo(torch.bfloat16).eps)
+        # alpha = (self.m + torch.einsum("bi,bi->b", g, finv_g)).sqrt().unsqueeze(1)
         finv_g /= alpha
+
+                if (alpha == 0).any():
+            print("!!!!!!!!!!!!!!!!!!!! ZERO IN ALPHA (nmv) !!!!!!!!!!!!!!!!!!!!")
+        if torch.isnan(alpha).any():
+            print("!!!!!!!!!!!!!!!!!!!! NAN IN ADD GRAD (nmv) (nan in alpha) !!!!!!!!!!!!!!!!!!!!")
+        if torch.isnan(temp).any():
+            print("!!!!!!!!!!!!!!!!!!!! NAN IN ADD GRAD (nmv) (nan in temp) !!!!!!!!!!!!!!!!!!!!")
+        if torch.isnan(finv_g).any():
+            print("!!!!!!!!!!!!!!!!!!!! NAN IN ADD GRAD (nmv) (nan in finv_g) !!!!!!!!!!!!!!!!!!!!")
+        if torch.isnan(self.f_inv).any():
+            print("!!!!!!!!!!!!!!!!!!!! NAN IN ADD GRAD (nmv) (nan in f_inv) !!!!!!!!!!!!!!!!!!!!")
+        if torch.isnan(g).any():
+            print("!!!!!!!!!!!!!!!!!!!! NAN IN ADD GRAD (nmv) (nan in g) !!!!!!!!!!!!!!!!!!!!")
 
         # update f_inv with new outer product: (batch, B) x (batch, B) -> (batch, B, B)
         self.f_inv.baddbmm_(finv_g.unsqueeze(2), finv_g.unsqueeze(1), alpha=-1)
