@@ -310,6 +310,7 @@ class BasePruningModifier(ABC, ScheduledUpdateModifier):
             f"{layer_name}.{param_name}"
             for layer_name, param_name in zip(layer_names, param_names)
         ]
+        # print("full_param_names: ", full_param_names)
         self._mask_creator = self._get_mask_creator(full_param_names, params)
         self._scorer = self._get_scorer(params)
 

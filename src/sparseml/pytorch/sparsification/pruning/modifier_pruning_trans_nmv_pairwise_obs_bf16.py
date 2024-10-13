@@ -248,7 +248,7 @@ class BF16OBSTransnmvpairPruningModifier(BaseGradualPruningModifier):
         :param kwargs: optional kwargs to support specific arguments
             for individual modifiers.
         """
-        _LOGGER.info("Initializing BF16OBSTransnmvpairPruningModifier")
+        _LOGGER.debug("Initializing BF16OBSTransnmvpairPruningModifier")
         if (
             "grad_sampler" not in kwargs
             or "data_loader_builder" not in kwargs["grad_sampler"]
@@ -274,7 +274,7 @@ class BF16OBSTransnmvpairPruningModifier(BaseGradualPruningModifier):
 
         torch.cuda.empty_cache()
         if self._scorer._is_main_proc:
-            _LOGGER.info("Running OBS Pruning")
+            _LOGGER.debug("Running OBS Pruning")
             self._scorer._enabled_grad_buffering = True
 
         self._pre_step_completed = True
@@ -289,7 +289,7 @@ class BF16OBSTransnmvpairPruningModifier(BaseGradualPruningModifier):
 
         for i in range(1, self._num_recomputations + 1):
             self._collect_grad_samples(module, self._grad_sampler)
-            _LOGGER.info("Sparsity recomputation ...")
+            _LOGGER.debug("Sparsity recomputation ...")
             recomputation_sparsity = [
                 interpolate(
                     i,
@@ -301,7 +301,7 @@ class BF16OBSTransnmvpairPruningModifier(BaseGradualPruningModifier):
                 for start_sparsity, target_sparsity in zip(last_applied_sparsities, to_apply_sparsities)
             ]
 
-            _LOGGER.info("check_mask_update "+str(epoch) + " " + str(self._num_recomputations) + " " + str(to_apply_sparsities))
+            _LOGGER.debug("check_mask_update "+str(epoch) + " " + str(self._num_recomputations) + " " + str(to_apply_sparsities))
             # overwrite sparsity targets when there are recomputations
             super().check_mask_update(
                 module,
@@ -352,15 +352,15 @@ class BF16OBSTransnmvpairPruningModifier(BaseGradualPruningModifier):
         torch.cuda.empty_cache()
 
         is_training = module.training
-        _LOGGER.info("Setting the model in the eval mode")
+        _LOGGER.debug("Setting the model in the eval mode")
         module.eval()
 
-        _LOGGER.info(f"Starting to collect {self._num_grads} grads with GradSampler")
+        _LOGGER.debug(f"Starting to collect {self._num_grads} grads with GradSampler")
         for i in grad_sampler.iter_module_backwards(module, self._num_grads):
             self._module_masks.pre_optim_step_update()
 
         if is_training:
-            _LOGGER.info("Setting the model back to the train mode")
+            _LOGGER.debug("Setting the model back to the train mode")
             module.train()
 
 
@@ -598,13 +598,13 @@ class BF16OBSTransnmvpairPruningParamsScorer(PruningParamsGradScorer):
         m=2; n=1
         # v=128
 
-        _LOGGER.info("_last_applied_sparsity "+ str(nn_row) + " " + str(mm_row) + " " + str(v) + " " + str(sparsity))
+        _LOGGER.debug("_last_applied_sparsity "+ str(nn_row) + " " + str(mm_row) + " " + str(v) + " " + str(sparsity))
 
         if self._is_main_proc:
             for i, finv in enumerate(self._finvs):
                 # TODO self._params[i].data需要转置
-                print("nmv raw params: ", self._params[i])
-                print("nmv finv: ", finv.f_inv)
+                # print("nmv raw params: ", self._params[i])
+                # print("nmv finv: ", finv.f_inv)
                 trans_params = self._params[i].data.t()
                 block_w = trans_params.reshape(-1, m).to("cpu")
                 # block_w = self._params[i].data.view(-1, m).to("cpu")
@@ -621,11 +621,11 @@ class BF16OBSTransnmvpairPruningParamsScorer(PruningParamsGradScorer):
                     .reshape((finv.d // m, m, m))
                 )
 
-                _LOGGER.info("layer " + str(i) + " (out of " + str(len(self._finvs)) + "). Device cpu")
+                _LOGGER.debug("layer " + str(i) + " (out of " + str(len(self._finvs)) + "). Device cpu")
                 # TODO 转置后的行列数
                 nrows, ncols = trans_params.shape
                 # nrows, ncols = self._params[i].data.shape
-                _LOGGER.info("nrows: "+str(nrows)+", ncols: "+str(ncols)+", v: "+str(v)+", nn_row: "+str(nn_row) )
+                _LOGGER.debug("nrows: "+str(nrows)+", ncols: "+str(ncols)+", v: "+str(v)+", nn_row: "+str(nn_row) )
 
                 ############ pair-wise
                 block_finv_w_pair = torch.linalg.solve(
@@ -678,7 +678,7 @@ class BF16OBSTransnmvpairPruningParamsScorer(PruningParamsGradScorer):
                         best_score_nm = torch.where(w, score_nm, best_score_nm)
 
                     if i==3 or i==0:
-                        _LOGGER.info("block_finv_w_nm "+str(block_finv_w_nm.reshape(-1,mm_row//2)[:4]))#FIXME: block_finv w(1,1) where w= 0,x != w(0,1) where w=0,x
+                        _LOGGER.debug("block_finv_w_nm "+str(block_finv_w_nm.reshape(-1,mm_row//2)[:4]))#FIXME: block_finv w(1,1) where w= 0,x != w(0,1) where w=0,x
 
                 ############ choose best
                 best_indv_scores = best_score_nm.view(-1, mm_row//2)
@@ -787,8 +787,8 @@ class BF16OBSTransnmvpairPruningParamsScorer(PruningParamsGradScorer):
                     scores[i][self._masks[i] == 0] = float("-inf")
 
                 if i==3 or i==0:
-                    _LOGGER.info("block_finv_w "+str(block_finv_w[i].reshape(-1,mm_row)[:4]))
-                    _LOGGER.info("scores "+str(scores[i].reshape(-1,mm_row)[:4]))
+                    _LOGGER.debug("block_finv_w "+str(block_finv_w[i].reshape(-1,mm_row)[:4]))
+                    _LOGGER.debug("scores "+str(scores[i].reshape(-1,mm_row)[:4]))
 
                 """ for idx, subm in enumerate(scores[i].reshape(-1, 1, mm_row)):
                         total = torch.sum((~subm.any(axis=0)))
@@ -857,7 +857,7 @@ class BF16OBSTransnmvpairPruningParamsScorer(PruningParamsGradScorer):
             # trans_grad = self._params[i].grad.t()
             # print("nmv param: ", self._params[i])
             # print("gradient: ", self._params[i].grad)
-            finv_temp = finv.f_inv.clone()
+            # finv_temp = finv.f_inv.clone()
             finv.add_grad(self._params[i].grad.t().reshape(-1).to(self._devices[i]))
             # finv.add_grad(self._params[i].grad.view(-1).to(self._devices[i]))
 
@@ -873,7 +873,7 @@ class BF16OBSTransnmvpairPruningParamsScorer(PruningParamsGradScorer):
         obs_updates = [None] * len(self._params)
         if self._is_main_proc:
             for i, param in enumerate(self._params):
-                _LOGGER.info("assert in " + str(i))
+                _LOGGER.debug("assert in " + str(i))
                 #print("assert in ", i, "mask_diffs[i]", mask_diffs[i].shape, "self._block_finv_w[i]", self._block_finv_w[i].shape)
                 #print( torch.all((mask_diffs[i] == -1) == (self._block_finv_w[i].view(mask_diffs[i].shape) != 0)) )
 
@@ -885,7 +885,7 @@ class BF16OBSTransnmvpairPruningParamsScorer(PruningParamsGradScorer):
                 #assert torch.all((mask_diffs[i] == -1) == (self._block_finv_w[i].view(mask_diffs[i].shape) != 0))
 
                 if i==0 or i==3:
-                    _LOGGER.info("mask df "+str(mask_diffs[i].reshape(-1,16)[:4]))
+                    _LOGGER.debug("mask df "+str(mask_diffs[i].reshape(-1,16)[:4]))
 
                 # TODO 这边可能要做转置，self._block_finv_w[i]是正常的形式，如果这样的话就不需要额外转置
                 #obs_updates[i] = (
@@ -920,7 +920,7 @@ class BF16OBSTransnmvpairPruningParamsScorer(PruningParamsGradScorer):
             param.data -= obs_updates[i].to(param.data.device)
             param.data[mask_diffs[i] == -1] = 0.0
             
-            print("after mask update nmv params: ", param.data)
+            # print("after mask update nmv params: ", param.data)
 
             if torch.isnan(param.data).any():
                 print("after nmv, param exist nan!!!")
@@ -1003,11 +1003,18 @@ class EmpiricalBlockFisherInverse:
         # alpha = (temp).sqrt().unsqueeze(1)
         finv_g /= alpha
         
+        if (alpha == 0).any():
+            print("!!!!!!!!!!!!!!!!!!!! ZERO IN ALPHA (nmv) !!!!!!!!!!!!!!!!!!!!")
+        if torch.isnan(alpha).any():
+            print("!!!!!!!!!!!!!!!!!!!! NAN IN ADD GRAD (nmv) (nan in alpha) !!!!!!!!!!!!!!!!!!!!")
+        if torch.isnan(temp).any():
+            print("!!!!!!!!!!!!!!!!!!!! NAN IN ADD GRAD (nmv) (nan in temp) !!!!!!!!!!!!!!!!!!!!")
         if torch.isnan(finv_g).any():
-            if (alpha == 0).any():
-                print("!!!!!!!!!!!!!!!!!!!! ZERO IN ALPHA !!!!!!!!!!!!!!!!!!!!")
-            if torch.isnan(alpha).any():
-                print("!!!!!!!!!!!!!!!!!!!! NAN IN ADD GRAD !!!!!!!!!!!!!!!!!!!!")
+            print("!!!!!!!!!!!!!!!!!!!! NAN IN ADD GRAD (nmv) (nan in finv_g) !!!!!!!!!!!!!!!!!!!!")
+        if torch.isnan(self.f_inv).any():
+            print("!!!!!!!!!!!!!!!!!!!! NAN IN ADD GRAD (nmv) (nan in f_inv) !!!!!!!!!!!!!!!!!!!!")
+        if torch.isnan(g).any():
+            print("!!!!!!!!!!!!!!!!!!!! NAN IN ADD GRAD (nmv) (nan in g) !!!!!!!!!!!!!!!!!!!!")
 
         # if torch.isnan(alpha).any():
         #     if (temp < 0).any():

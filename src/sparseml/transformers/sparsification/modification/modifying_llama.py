@@ -58,11 +58,11 @@ def modify(model: nn.Module) -> nn.Module:
     :return: the modified LLaMa model
     """
     check_transformers_version()
-    for name, submodule in model.named_modules():
-        if isinstance(
-            submodule, (LlamaAttention, LlamaFlashAttention2, LlamaSdpaAttention)
-        ) and not isinstance(submodule, LlamaAttentionWithQuantizableMatmuls):
-            swap_modules(model, name, LlamaAttentionWithQuantizableMatmuls(submodule))
+    # for name, submodule in model.named_modules():
+    #     if isinstance(
+    #         submodule, (LlamaAttention, LlamaFlashAttention2, LlamaSdpaAttention)
+    #     ) and not isinstance(submodule, LlamaAttentionWithQuantizableMatmuls):
+    #         swap_modules(model, name, LlamaAttentionWithQuantizableMatmuls(submodule))
     return model
 
 
