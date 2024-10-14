@@ -1,0 +1,162 @@
+modifiers:
+  - !EpochRangeModifier
+    start_epoch: 0
+    end_epoch: 5
+
+training_modifiers:
+  - !LearningRateFunctionModifier
+    start_epoch: 0.0
+    end_epoch: 2.0
+    lr_func: linear
+    init_lr: 1e-5
+    final_lr: 1e-6
+  - !LearningRateFunctionModifier
+    start_epoch: 2.0
+    end_epoch: 10.0
+    lr_func: linear
+    init_lr: 1e-5
+    final_lr: 1e-6
+
+  - !OBSTransnmvpairPruningModifier
+    params: [
+      're:.*layers.(3|4|5|6).mlp.(gate_proj|up_proj|down_proj)',
+    ]
+    init_sparsity: 0.5
+    final_sparsity: 0.5
+    start_epoch: 2.0
+    end_epoch: 2.0
+    update_frequency: 1.0
+    inter_func: linear
+    global_sparsity: False
+    mask_type: '1:2:32'
+    num_grads: 1024
+    damp: 1e-7
+    fisher_block_size: 32
+    grad_sampler_kwargs:
+     batch_size: 16
+
+  - !OBS24pairPruningModifier
+    params: [
+      're:.*layers.(3|4|5|6).mlp.(gate_proj|up_proj|down_proj)',
+    ]
+    init_sparsity: 0.75
+    final_sparsity: 0.75
+    start_epoch: 2.1
+    end_epoch: 2.1
+    update_frequency: 1.0
+    inter_func: linear
+    global_sparsity: False
+    mask_type: unstructured
+    num_grads: 1024
+    damp: 1e-7
+    fisher_block_size: 32
+    grad_sampler_kwargs:
+     batch_size: 16
+
+  - !OBSTransnmvpairPruningModifier
+    params: [
+      're:.*layers.(7|8|9|10).mlp.(gate_proj|up_proj|down_proj)',
+    ]
+    init_sparsity: 0.5
+    final_sparsity: 0.5
+    start_epoch: 2.2
+    end_epoch: 2.2
+    update_frequency: 1.0
+    inter_func: linear
+    global_sparsity: False
+    mask_type: '1:2:32'
+    num_grads: 1024
+    damp: 1e-7
+    fisher_block_size: 32
+    grad_sampler_kwargs:
+     batch_size: 16
+
+  - !OBS24pairPruningModifier
+    params: [
+      're:.*layers.(7|8|9|10).mlp.(gate_proj|up_proj|down_proj)',
+    ]
+    init_sparsity: 0.75
+    final_sparsity: 0.75
+    start_epoch: 2.3
+    end_epoch: 2.3
+    update_frequency: 1.0
+    inter_func: linear
+    global_sparsity: False
+    mask_type: unstructured
+    num_grads: 1024
+    damp: 1e-7
+    fisher_block_size: 32
+    grad_sampler_kwargs:
+     batch_size: 16
+
+  - !OBSTransnmvpairPruningModifier
+    params: [
+      're:.*layers.(11|12|13|14).mlp.(gate_proj|up_proj|down_proj)',
+    ]
+    init_sparsity: 0.5
+    final_sparsity: 0.5
+    start_epoch: 2.4
+    end_epoch: 2.4
+    update_frequency: 1.0
+    inter_func: linear
+    global_sparsity: False
+    mask_type: '1:2:32'
+    num_grads: 1024
+    damp: 1e-7
+    fisher_block_size: 32
+    grad_sampler_kwargs:
+     batch_size: 16
+
+  - !OBS24pairPruningModifier
+    params: [
+      're:.*layers.(11|12|13|14).mlp.(gate_proj|up_proj|down_proj)',
+    ]
+    init_sparsity: 0.75
+    final_sparsity: 0.75
+    start_epoch: 2.5
+    end_epoch: 2.5
+    update_frequency: 1.0
+    inter_func: linear
+    global_sparsity: False
+    mask_type: unstructured
+    num_grads: 1024
+    damp: 1e-7
+    fisher_block_size: 32
+    grad_sampler_kwargs:
+     batch_size: 16
+  
+  - !OBSTransnmvpairPruningModifier
+    params: [
+      're:.*layers.(15|16|17|18).mlp.(gate_proj|up_proj|down_proj)',
+    ]
+    init_sparsity: 0.5
+    final_sparsity: 0.5
+    start_epoch: 2.6
+    end_epoch: 2.6
+    update_frequency: 1.0
+    inter_func: linear
+    global_sparsity: False
+    mask_type: '1:2:32'
+    num_grads: 1024
+    damp: 1e-7
+    fisher_block_size: 32
+    grad_sampler_kwargs:
+     batch_size: 16
+
+  - !OBS24pairPruningModifier
+    params: [
+      're:.*layers.(15|16|17|18).mlp.(gate_proj|up_proj|down_proj)',
+    ]
+    init_sparsity: 0.75
+    final_sparsity: 0.75
+    start_epoch: 2.7
+    end_epoch: 2.7
+    update_frequency: 1.0
+    inter_func: linear
+    global_sparsity: False
+    mask_type: unstructured
+    num_grads: 1024
+    damp: 1e-7
+    fisher_block_size: 32
+    grad_sampler_kwargs:
+     batch_size: 16
