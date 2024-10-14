@@ -1,6 +1,10 @@
 #!/bin/bash
 
 YAML_LISTS=(
+    tiny_llama_dense_float32
+    tiny_llama_mag_float32
+    tiny_llama_venom_gsm8k_float32
+    tiny_llama_12_16_gsm8k_float32
     tiny_llama_12_32_gsm8k_float32
 )
 
