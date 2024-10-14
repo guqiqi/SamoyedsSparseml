@@ -43,4 +43,7 @@ from .modifier_pruning_trans_nmv_pairwise_obs import *
 from .modifier_pruning_24_pairwise_obs_bf16 import *
 from .modifier_pruning_trans_nmv_pairwise_obs_bf16 import *
 
+from .modifier_pruning_nmv_pairwise_obs_bf16 import *
+from .modifier_pruning_nmv_pairwise_obs import *
+
 from .scorer import *
