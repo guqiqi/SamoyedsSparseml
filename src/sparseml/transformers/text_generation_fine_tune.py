@@ -416,8 +416,8 @@ def main(**kwargs):
         revision=model_args.model_revision,
         use_auth_token=True if model_args.use_auth_token else None,
     )
-    
-    config._attn_implementation = 'flash_attention_2'
+    if training_args.bf16:
+        config._attn_implementation = 'flash_attention_2'
 
     # model, teacher = SparseAutoModel.question_answering_from_pretrained_distil(
     #     model_name_or_path=model_args.model_name_or_path,
@@ -445,6 +445,9 @@ def main(**kwargs):
         sequence_length=None,  # use model default
         **model_kwargs,
     )
+
+    if training_args.bf16:
+        model = model.to(torch.bfloat16)
     
     print(model)
 
@@ -476,6 +479,8 @@ def main(**kwargs):
         revision=model_args.model_revision,
         use_auth_token=True if model_args.use_auth_token else None,
     )
+    if model_args.model_name_or_path == "Qwen/Qwen2.5-1.5B":
+        tokenizer.padding_side='left'
 
     # Tokenizer check: this script requires a fast tokenizer.
     if not isinstance(tokenizer, PreTrainedTokenizerFast):
