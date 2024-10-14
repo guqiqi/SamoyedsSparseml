@@ -23,12 +23,12 @@ for yaml_name in ${YAML_LISTS[@]};do
         --optim adamw_torch \
         --evaluation_strategy epoch \
         --save_strategy epoch \
-        --save_total_limit 3 \
+        --save_total_limit 1 \
         --per_device_train_batch_size 8 \
         --per_device_eval_batch_size 8 \
         --max_seq_length 384 \
         --doc_stride 128 \
-        --preprocessing_num_workers 32 \
+        --preprocessing_num_workers 12 \
         --seed 42 \
         --ddp_find_unused_parameters false \
         --recipe benchmark/recipes/${yaml_name}.yaml \
