@@ -20,6 +20,7 @@ for yaml_name in ${YAML_LISTS[@]};do
         --dataset_config_name main \
         --do_train \
         --do_eval \
+        --bf16 \
         --optim adamw_torch \
         --evaluation_strategy epoch \
         --save_strategy epoch \
